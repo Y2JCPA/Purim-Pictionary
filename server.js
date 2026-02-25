@@ -44,7 +44,7 @@ function createRoom(hostId, hostName, settings = {}) {
     currentDrawerIndex: -1,
     currentWord: '',
     roundNumber: 0,
-    totalRounds: settings.totalRounds || 10,
+    totalRounds: settings.totalRounds || 8,
     timePerTurn: settings.timePerTurn || 40,
     timer: null,
     timeRemaining: 0,
@@ -331,7 +331,7 @@ io.on('connection', (socket) => {
 
   socket.on('create_room', ({ playerName, totalRounds, timePerTurn, isChampionship }) => {
     const room = createRoom(socket.id, playerName, {
-      totalRounds: totalRounds || 10,
+      totalRounds: totalRounds || 8,
       timePerTurn: timePerTurn || 40,
       isChampionship: isChampionship || false,
     });
@@ -413,7 +413,7 @@ io.on('connection', (socket) => {
 
     // Apply lobby settings (host may have changed them after room creation)
     if (settings) {
-      if (settings.totalRounds) room.totalRounds = Math.min(Math.max(parseInt(settings.totalRounds) || 10, 3), 30);
+      if (settings.totalRounds) room.totalRounds = Math.min(Math.max(parseInt(settings.totalRounds) || 8, 3), 30);
       if (settings.timePerTurn) room.timePerTurn = Math.min(Math.max(parseInt(settings.timePerTurn) || 40, 15), 90);
       if (settings.isChampionship !== undefined) room.isChampionship = !!settings.isChampionship;
     }
