@@ -106,7 +106,7 @@ $('create-btn').onclick=()=>{const name=$('player-name').value.trim();if(!name){
 $('player-name').addEventListener('keydown',(e)=>{if(e.key==='Enter'){const code=$('room-code-input').value.trim();if(code.length>=4)$('join-btn').click();else $('room-code-input').focus()}});
 $('room-code-input').addEventListener('keydown',(e)=>{if(e.key==='Enter')$('join-btn').click()});
 $('room-code-display').onclick=()=>{navigator.clipboard?.writeText(roomCode);showToast('Room code copied!','success')};
-$('start-game-btn').onclick=()=>{socket.emit('start_game')};
+$('start-game-btn').onclick=()=>{socket.emit('start_game',{totalRounds:parseInt($('setting-rounds').value)||10,timePerTurn:parseInt($('setting-time').value)||40,isChampionship:$('setting-championship').checked})};
 $('guess-input').addEventListener('keydown',(e)=>{if(e.key==='Enter'){const msg=$('guess-input').value.trim();if(!msg)return;socket.emit('guess',{message:msg});$('guess-input').value=''}});
 $('guess-btn').onclick=()=>{const msg=$('guess-input').value.trim();if(!msg)return;socket.emit('guess',{message:msg});$('guess-input').value=''};
 $('play-again-btn').onclick=()=>{window.location.reload()};

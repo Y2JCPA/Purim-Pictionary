@@ -402,13 +402,20 @@ io.on('connection', (socket) => {
     });
   });
 
-  socket.on('start_game', () => {
+  socket.on('start_game', (settings) => {
     if (!currentRoom) return;
     const room = rooms.get(currentRoom);
     if (!room || socket.id !== room.hostId) return;
     if (room.players.size < 2) {
       socket.emit('error_message', { message: 'Need at least 2 players to start!' });
       return;
+    }
+
+    // Apply lobby settings (host may have changed them after room creation)
+    if (settings) {
+      if (settings.totalRounds) room.totalRounds = Math.min(Math.max(parseInt(settings.totalRounds) || 10, 3), 30);
+      if (settings.timePerTurn) room.timePerTurn = Math.min(Math.max(parseInt(settings.timePerTurn) || 40, 15), 90);
+      if (settings.isChampionship !== undefined) room.isChampionship = !!settings.isChampionship;
     }
 
     room.state = 'playing';
