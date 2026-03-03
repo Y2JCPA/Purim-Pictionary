@@ -13,39 +13,11 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // ─── Word List ──────────────────────────────────────────────
 const WORD_LIST = [
-  // Characters
-  "Esther", "Mordechai", "Haman", "Achashverosh", "Vashti", "Zeresh",
-  "10 Sons of Haman", "Bigtan and Teresh", "Memuchan", "Hegai",
-  // Megillah story
-  "Megillah", "Royal Decree", "Throne", "Crown", "Palace", "Gallows",
-  "Signet Ring", "Sackcloth and Ashes", "Golden Scepter", "Royal Banquet",
-  "Casting Lots", "Horse Parade", "Hanging", "Fasting", "Bowing Down",
-  "The Kings Sleepless Night", "Reading the Royal Chronicles",
-  "Mordechai at the Gate", "Esthers Secret", "Hamans Downfall",
-  // Food \& drink
-  "Hamantaschen", "Wine", "Mishloach Manot", "Seudah", "Kreplach",
-  "Poppy Seeds", "Grape Juice", "Challah", "Chocolate Coins",
-  // Celebrations
-  "Costumes", "Mask", "Grogger", "Purim Shpiel", "Dancing",
-  "Singing", "Parade", "Confetti", "Face Paint", "Wig",
-  "Clown", "Superhero Costume", "Queen Costume", "King Costume",
-  // Mitzvot
-  "Tzedaka", "Matanot LaEvyonim", "Mishloach Manot Basket",
-  "Reading the Megillah", "Purim Seudah", "Al Hanisim",
-  // Places
-  "Shushan", "Beit Hamikdash", "Persia", "Kings Garden",
-  "Esthers Chambers", "City Square",
-  // Objects \& symbols
-  "Scroll", "Crown Jewels", "Royal Robe", "Sword", "Treasure",
-  "Persian Rug", "Goblet", "Feast Table", "Chariot", "Harp",
-  "Shield", "Banner", "Dice", "Perfume", "Mirror",
-  // Concepts
-  "Hidden Miracle", "Vnahafoch Hu", "Ad Dlo Yada",
-  "Simcha", "Unity", "Courage", "Disguise", "Joy",
-  // Fun extras
-  "Drunk on Purim", "Triangle Cookie", "Noise Making",
-  "Gift Basket", "Fancy Dress", "Party Hat", "Masquerade Ball",
-  "Puppet Show", "Silly String", "Crown on a Kid"
+  "Esther", "Mordechai", "Haman", "Achashverosh", "Vashti",
+  "Gallows", "Throne", "Crown", "Palace", "Scroll",
+  "Ring", "Royal Decree", "Bowing", "Hamantaschen", "Wine",
+  "Grogger", "Mask", "Costume", "Wig", "Dancing",
+  "Mishloach Manot", "Megillah Reading", "Matanot LaEvyonim", "Simcha"
 ];
 
 // ─── Game State ─────────────────────────────────────────────
