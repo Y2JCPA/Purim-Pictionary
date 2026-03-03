@@ -13,19 +13,51 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // ─── Word List ──────────────────────────────────────────────
 const WORD_LIST = [
-  "Queen", "Sales Tax", "Megillah", "Throne", "Haman", "Desk", "Coffee",
-  "Laptop", "Party", "Delaware", "Hamantaschen", "Real Estate", "Pension",
-  "King", "10 Sons of Haman", "Calculator", "Shekels", "US Flag",
-  "Foreign Income", "Mordechai", "Water Bottle", "Transfer Pricing",
-  "Achashverosh", "Mouse", "Deadline", "Israeli Flag", "Mask", "Grogger",
-  "Royal Decree", "Bank Account", "Crown", "Florida", "Beit Hamikdash",
-  "Costumes", "California", "Tax Refund", "Headset", "Depreciation",
-  "Pennsylvania", "New York", "Olim", "Tax Treaty", "Palace", "Gallows",
-  "Pencil", "Keyboard", "Horse", "Perfume", "Tzedaka", "Esther", "Wine"
+  // Characters
+  "Esther", "Mordechai", "Haman", "Achashverosh", "Vashti", "Zeresh",
+  "10 Sons of Haman", "Bigtan and Teresh", "Memuchan", "Hegai",
+  // Megillah story
+  "Megillah", "Royal Decree", "Throne", "Crown", "Palace", "Gallows",
+  "Signet Ring", "Sackcloth and Ashes", "Golden Scepter", "Royal Banquet",
+  "Casting Lots", "Horse Parade", "Hanging", "Fasting", "Bowing Down",
+  "The Kings Sleepless Night", "Reading the Royal Chronicles",
+  "Mordechai at the Gate", "Esthers Secret", "Hamans Downfall",
+  // Food \& drink
+  "Hamantaschen", "Wine", "Mishloach Manot", "Seudah", "Kreplach",
+  "Poppy Seeds", "Grape Juice", "Challah", "Chocolate Coins",
+  // Celebrations
+  "Costumes", "Mask", "Grogger", "Purim Shpiel", "Dancing",
+  "Singing", "Parade", "Confetti", "Face Paint", "Wig",
+  "Clown", "Superhero Costume", "Queen Costume", "King Costume",
+  // Mitzvot
+  "Tzedaka", "Matanot LaEvyonim", "Mishloach Manot Basket",
+  "Reading the Megillah", "Purim Seudah", "Al Hanisim",
+  // Places
+  "Shushan", "Beit Hamikdash", "Persia", "Kings Garden",
+  "Esthers Chambers", "City Square",
+  // Objects \& symbols
+  "Scroll", "Crown Jewels", "Royal Robe", "Sword", "Treasure",
+  "Persian Rug", "Goblet", "Feast Table", "Chariot", "Harp",
+  "Shield", "Banner", "Dice", "Perfume", "Mirror",
+  // Concepts
+  "Hidden Miracle", "Vnahafoch Hu", "Ad Dlo Yada",
+  "Simcha", "Unity", "Courage", "Disguise", "Joy",
+  // Fun extras
+  "Drunk on Purim", "Triangle Cookie", "Noise Making",
+  "Gift Basket", "Fancy Dress", "Party Hat", "Masquerade Ball",
+  "Puppet Show", "Silly String", "Crown on a Kid"
 ];
 
 // ─── Game State ─────────────────────────────────────────────
 const rooms = new Map();
+const reconnectTokens = new Map(); // token -> { roomCode, playerName, score }
+
+function generateToken() {
+  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  let t = '';
+  for (let i = 0; i < 16; i++) t += chars[Math.floor(Math.random() * chars.length)];
+  return t;
+}
 
 function generateRoomCode() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -339,15 +371,18 @@ io.on('connection', (socket) => {
     socket.join(room.code);
     currentRoom = room.code;
 
+    const rToken = generateToken();
+    reconnectTokens.set(rToken, { roomCode: room.code, playerName: playerName, score: 0 });
     socket.emit('room_created', {
       code: room.code,
       players: getPlayerList(room),
       isChampionship: room.isChampionship,
+      reconnectToken: rToken,
     });
   });
 
   socket.on('join_room', ({ roomCode, playerName, asSpectator }) => {
-    const code = roomCode.toUpperCase();
+    const code = roomCode.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
     const room = rooms.get(code);
 
     if (!room) {
@@ -390,10 +425,13 @@ io.on('connection', (socket) => {
     socket.join(code);
     currentRoom = code;
 
+    const jToken = generateToken();
+    reconnectTokens.set(jToken, { roomCode: code, playerName: playerName, score: 0 });
     socket.emit('room_joined', {
       code,
       players: getPlayerList(room),
       isChampionship: room.isChampionship,
+      reconnectToken: jToken,
     });
 
     io.to(code).emit('player_joined', {
@@ -482,6 +520,44 @@ io.on('connection', (socket) => {
     endTurn(room, false);
   });
 
+  socket.on('rejoin', ({ token, roomCode }) => {
+    const saved = reconnectTokens.get(token);
+    if (!saved || saved.roomCode !== roomCode.replace(/[^A-Za-z0-9]/g, '').toUpperCase()) {
+      socket.emit('error_message', { message: 'Could not rejoin. Please join again.' });
+      return;
+    }
+    const room = rooms.get(saved.roomCode);
+    if (!room) {
+      socket.emit('error_message', { message: 'Room no longer exists.' });
+      reconnectTokens.delete(token);
+      return;
+    }
+    // Restore player
+    room.players.set(socket.id, { name: saved.playerName, score: saved.score });
+    if (!room.playerOrder.includes(socket.id)) room.playerOrder.push(socket.id);
+    socket.join(saved.roomCode);
+    currentRoom = saved.roomCode;
+    reconnectTokens.delete(token);
+
+    socket.emit('rejoined', {
+      code: saved.roomCode,
+      players: getPlayerList(room),
+      state: room.state,
+      isChampionship: room.isChampionship,
+      isHost: socket.id === room.hostId,
+      token: generateToken(), // new token for next disconnect
+    });
+    // Save new token
+    const newToken = generateToken();
+    reconnectTokens.set(newToken, { roomCode: saved.roomCode, playerName: saved.playerName, score: saved.score });
+    socket.emit('reconnect_token', { token: newToken });
+
+    io.to(saved.roomCode).emit('player_rejoined', {
+      name: saved.playerName,
+      players: getPlayerList(room),
+    });
+  });
+
   socket.on('disconnect', () => {
     if (!currentRoom) return;
     const room = rooms.get(currentRoom);
@@ -495,6 +571,11 @@ io.on('connection', (socket) => {
 
     const player = room.players.get(socket.id);
     if (player) {
+      // Save reconnect token (valid for 2 minutes)
+      const token = generateToken();
+      reconnectTokens.set(token, { roomCode: currentRoom, playerName: player.name, score: player.score });
+      setTimeout(() => reconnectTokens.delete(token), 2 * 60 * 1000);
+      // Notify others but give them a chance to reconnect
       room.players.delete(socket.id);
       room.playerOrder = room.playerOrder.filter(id => id !== socket.id);
 
@@ -534,3 +615,28 @@ const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`🎭 Purim Pictionary server running on port ${PORT}`);
 });
+
+// ─── Keep-Alive (prevent Render free tier spin-down) ────────
+const https = require('https');
+const http2 = require('http');
+function keepAlive() {
+  if (rooms.size > 0) {
+    const url = process.env.RENDER_EXTERNAL_URL;
+    if (url) {
+      (url.startsWith('https') ? https : http2).get(url, () => {});
+    }
+  }
+}
+setInterval(keepAlive, 5 * 60 * 1000); // every 5 min if rooms exist
+
+// ─── Stale room cleanup ────────────────────────────────────
+setInterval(() => {
+  const now = Date.now();
+  rooms.forEach((room, code) => {
+    if (room.players.size === 0 && room.spectators.size === 0) {
+      clearInterval(room.timer);
+      clearInterval(room.hintInterval);
+      rooms.delete(code);
+    }
+  });
+}, 10 * 60 * 1000); // every 10 min
