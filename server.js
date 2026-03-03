@@ -13,11 +13,16 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // ─── Word List ──────────────────────────────────────────────
 const WORD_LIST = [
+  // Original 24
   "Esther", "Mordechai", "Haman", "Achashverosh", "Vashti",
   "Gallows", "Throne", "Crown", "Palace", "Scroll",
   "Ring", "Royal Decree", "Bowing", "Hamantaschen", "Wine",
   "Grogger", "Mask", "Costume", "Wig", "Dancing",
-  "Mishloach Manot", "Megillah Reading", "Matanot LaEvyonim", "Simcha"
+  "Mishloach Manot", "Megillah Reading", "Matanot LaEvyonim", "Simcha",
+  // Batch 2 additions
+  "Horse", "Scepter", "Hanging", "Adar", "Lots", "Clown",
+  // Batch 3 additions
+  "Half the Kingdom", "Ninja", "Robot", "Pirate", "Bride", "Miracle"
 ];
 
 // ─── Game State ─────────────────────────────────────────────
